@@ -1,31 +1,50 @@
 # encoding : utf-8
 
 class Information
-  attr_accessor :fields, :info
+  attr_accessor :_info_
 
-  def initialize(args)
-    info = args
+  def initialize
+    @_info_ = Info.new
+    @_info_.name = self.class
+  end
 
-    create_attr
+  def associate(info)
+    @_info_   = info
+
+    init_attribute
+  end
+
+  def update(opts = {})
+    opts.each do |key, value|
+      send(key.to_sym, value)  
+    end
+
+    save
+  end
+
+  def save
+    @_info_.value = to_json
+
+    @_info_.save
   end
 
   def to_json
-    fields.to_json
+    h = {}
+    instance_variables.inject(h) do |hash, attr| 
+      next if attr == :@_info_
+      hash[attr] = send(attr.to_s.sub(/^@/,'').to_sym) 
+    end
+
+    h.to_json
   end
 
-  def build(json_str)
-    fields = JOSN.parse(json_str)
-  end
+  private
 
-  def create_attr
-    
-    fields.each do |attr, value|
-      unless self.respond_to? attr.to_sym
-        instance_eval("def #{attr}; @#{attr}; end")
-        instance_eval("def #{attr}=(x); @#{attr} = x; end")
-      else
-        send(attr, value)
-      end
+  def init_attribute
+    attr_hash = @_info_.hash
+
+    attr_hash.each do |key, value|
+      instance_eval("self.#{key} = #{value}")
     end
   end
 end

@@ -9,4 +9,8 @@ class Info < ActiveRecord::Base
   def get_instance
     instance_eval(name.capitalize).send(:build, value)
   end
+
+  def hash
+    JOSN.parse(self.value)
+  end
 end
